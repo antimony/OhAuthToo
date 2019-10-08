@@ -1,4 +1,4 @@
-OhAuthToo
+OhAuthToo [Unsupported]
 =========
 
 A .Net library for OAuth2 authorization and requests.
