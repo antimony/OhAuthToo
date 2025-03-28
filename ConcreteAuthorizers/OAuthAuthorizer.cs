@@ -1,30 +1,37 @@
-﻿using System.IO;
-using OhAuthToo.Interfaces;
+﻿﻿﻿﻿using OhAuthToo.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OhAuthToo.ConcreteAuthorizers
 {
-    public abstract class OAuthAuthorizer:IOAuthAuthorizer
+    public abstract class OAuthAuthorizer : IOAuthAuthorizer
     {
+        private static readonly HttpClient httpClient = new HttpClient();
+        
         public abstract string ClientName { get; }
 
-        public string ClientId { get; set; }
-        protected virtual string AuthorizeUri { get; set; }
-        protected virtual string TokenUri { get; set; }
-        public string RedirectUri { get; set; }
-        public string Scope { get; set; }
-        public string ClientSecret { get; set; }
-        public virtual Dictionary<string,string> Params { get; set; } 
-        public delegate void AuthorizationComplete(DownloadStringCompletedEventArgs args);
-        public event AuthorizationComplete EndAuthorization;
+        public string? ClientId { get; set; }
+        protected virtual string? AuthorizeUri { get; set; }
+        protected virtual string? TokenUri { get; set; }
+        public string? RedirectUri { get; set; }
+        public string? Scope { get; set; }
+        public string? ClientSecret { get; set; }
+        public virtual Dictionary<string, string>? Params { get; set; }
+        public delegate void AuthorizationComplete(HttpResponseMessage response, string content);
+        public event AuthorizationComplete? EndAuthorization;
 
         public string CodeRequestUri
         {
             get
             {
+                if (string.IsNullOrEmpty(AuthorizeUri) || string.IsNullOrEmpty(ClientId) || string.IsNullOrEmpty(RedirectUri))
+                {
+                    throw new InvalidOperationException("AuthorizeUri, ClientId, and RedirectUri must be set");
+                }
+                
                 var query = new StringBuilder();
                 query.AppendFormat("?client_id={0}", ClientId);
                 query.AppendFormat("&redirect_uri={0}", RedirectUri);
@@ -45,55 +52,48 @@ namespace OhAuthToo.ConcreteAuthorizers
 
         private Uri TokenRequestUri(string code)
         {
-                var query = new StringBuilder();
-                query.AppendFormat("?client_id={0}", ClientId);
-                query.AppendFormat("&client_secret={0}", ClientSecret);
-                query.AppendFormat("&redirect_uri={0}", RedirectUri);
-                query.AppendFormat("&code={0}", code);
-                if (Params != null)
+            if (string.IsNullOrEmpty(TokenUri) || string.IsNullOrEmpty(ClientId) || 
+                string.IsNullOrEmpty(ClientSecret) || string.IsNullOrEmpty(RedirectUri))
+            {
+                throw new InvalidOperationException("TokenUri, ClientId, ClientSecret, and RedirectUri must be set");
+            }
+            
+            var query = new StringBuilder();
+            query.AppendFormat("?client_id={0}", ClientId);
+            query.AppendFormat("&client_secret={0}", ClientSecret);
+            query.AppendFormat("&redirect_uri={0}", RedirectUri);
+            query.AppendFormat("&code={0}", code);
+            if (Params != null)
+            {
+                foreach (var param in Params)
                 {
-                    foreach (var param in Params)
-                    {
-                        query.AppendFormat("&{0}={1}", param.Key, param.Value);
-                    }
+                    query.AppendFormat("&{0}={1}", param.Key, param.Value);
                 }
-                return new Uri(TokenUri + query);
+            }
+            return new Uri(TokenUri + query);
         }
 
         public string GetAuthorizationResponse(string code)
         {
-            var uri = TokenRequestUri(code);
-            var myWebRequest = WebRequest.Create(uri);
-            WebResponse myWebResponse;
-            try
-            {
-                myWebResponse = myWebRequest.GetResponse();
-            }
-            catch (WebException e)
-            {
-                myWebResponse = e.Response;
-            }
-            Stream receiveStream = myWebResponse.GetResponseStream();
-            Encoding encode = Encoding.GetEncoding("utf-8");
-            var readStream = new StreamReader(receiveStream, encode);
-            string response = readStream.ReadToEnd();
-            readStream.Close();
-            myWebResponse.Close();
-            return response;
+            return GetAuthorizationResponseAsync(code).GetAwaiter().GetResult();
         }
 
-        public void GetAuthorizationResponseAsync(string code)
+        public async Task<string> GetAuthorizationResponseAsync(string code)
         {
-            var wc = new WebClient();
             var uri = TokenRequestUri(code);
-            wc.DownloadStringCompleted += delegate(object o, DownloadStringCompletedEventArgs eventArgs)
-                                              {
-                                                  if (EndAuthorization!=null)
-                                                  {
-                                                      EndAuthorization(eventArgs);
-                                                  }
-                                              };
-            wc.DownloadStringAsync(uri);
+            try
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(uri);
+                string content = await response.Content.ReadAsStringAsync();
+                
+                EndAuthorization?.Invoke(response, content);
+                return content;
+            }
+            catch (HttpRequestException e)
+            {
+                // Log the exception or handle it as needed
+                return $"{{\"error\": {{\"message\": \"{e.Message}\"}}}}";
+            }
         }
     }
 }

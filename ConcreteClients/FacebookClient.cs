@@ -1,17 +1,18 @@
-﻿using OhAuthToo.Interfaces;
+﻿﻿using OhAuthToo.Interfaces;
 using OhAuthToo.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace OhAuthToo.ConcreteClients
 {
     public class FacebookClient : IOAuthClient
     {
-        private string userId;
-        private string me;
+        private string? userId;
+        private string? me;
         public string BaseRequestUrl
         {
             get { return "https://graph.facebook.com"; }
@@ -27,19 +28,21 @@ namespace OhAuthToo.ConcreteClients
             set { GetDataFromResponse(value); }
         }
 
-        public string Token { get; set; }
-        public string UserId { get
+        public string? Token { get; set; }
+        public string? UserId
         {
-            if (string.IsNullOrEmpty(userId))
+            get
             {
-                var dict = OAuthClientUtils.JsonToDictionary(Me());
-                if (dict["id"]!=null)
+                if (string.IsNullOrEmpty(userId))
                 {
-                    return userId = dict["id"].ToString();
+                    var dict = OAuthClientUtils.JsonToDictionary(Me());
+                    if (dict != null && dict.TryGetValue("id", out var id) && id != null)
+                    {
+                        return userId = id.ToString();
+                    }
                 }
+                return userId;
             }
-            return userId;
-        }
             set { userId = value; }
         }
 
@@ -59,8 +62,9 @@ namespace OhAuthToo.ConcreteClients
                 throw new AuthenticationException(response);
             }
             Token = responseDict["access_token"].ToString();
-            int expireSeconds;
-            if (responseDict.ContainsKey("expires") && int.TryParse(responseDict["expires"].ToString(), out expireSeconds))
+            if (responseDict.TryGetValue("expires", out var expiresObj) && 
+                expiresObj != null && 
+                int.TryParse(expiresObj.ToString(), out int expireSeconds))
             {
                 TokenExpires = DateTime.Now.AddSeconds(expireSeconds);
             }
@@ -70,10 +74,22 @@ namespace OhAuthToo.ConcreteClients
             }
         }
 
-
         public string MakeRequest(string requesturl)
         {
+            if (string.IsNullOrEmpty(Token))
+            {
+                throw new InvalidOperationException("Token must be set before making requests");
+            }
             return OAuthClientUtils.MakeRequest(OAuthClientUtils.RequestUrl(BaseRequestUrl, requesturl, Token));
+        }
+
+        public async Task<string> MakeRequestAsync(string requesturl)
+        {
+            if (string.IsNullOrEmpty(Token))
+            {
+                throw new InvalidOperationException("Token must be set before making requests");
+            }
+            return await OAuthClientUtils.MakeRequestAsync(OAuthClientUtils.RequestUrl(BaseRequestUrl, requesturl, Token));
         }
 
         public DateTime TokenExpires { get; set; }
@@ -82,10 +98,20 @@ namespace OhAuthToo.ConcreteClients
         {
             return MakeRequest("/me/friends");
         }
+
+        public Task<string> FriendsListAsync()
+        {
+            return MakeRequestAsync("/me/friends");
+        }
         
         public string Permissions()
         {
             return MakeRequest("/me/permissions");
+        }
+
+        public Task<string> PermissionsAsync()
+        {
+            return MakeRequestAsync("/me/permissions");
         }
 
         public string Me()
@@ -97,14 +123,23 @@ namespace OhAuthToo.ConcreteClients
             return me = MakeRequest("/me");
         }
 
+        public async Task<string> MeAsync()
+        {
+            if (!string.IsNullOrEmpty(me))
+            {
+                return me;
+            }
+            return me = await MakeRequestAsync("/me");
+        }
+
         public string FirstName
         {
             get
             {
                 var dict = OAuthClientUtils.JsonToDictionary(Me());
-                if (dict.ContainsKey("first_name"))
+                if (dict != null && dict.TryGetValue("first_name", out var firstName) && firstName != null)
                 {
-                    return dict["first_name"].ToString();
+                    return firstName.ToString();
                 }
                 return string.Empty;
             }
@@ -115,9 +150,9 @@ namespace OhAuthToo.ConcreteClients
             get
             {
                 var dict = OAuthClientUtils.JsonToDictionary(Me());
-                if (dict.ContainsKey("last_name"))
+                if (dict != null && dict.TryGetValue("last_name", out var lastName) && lastName != null)
                 {
-                    return dict["last_name"].ToString();
+                    return lastName.ToString();
                 }
                 return string.Empty;
             }
@@ -128,8 +163,9 @@ namespace OhAuthToo.ConcreteClients
             get
             {
                 var dict = OAuthClientUtils.JsonToDictionary(Me());
-                DateTime bday;
-                if (dict.ContainsKey("birthday") && DateTime.TryParse((string)dict["birthday"], out bday))
+                if (dict != null && dict.TryGetValue("birthday", out var birthdayObj) && 
+                    birthdayObj != null && 
+                    DateTime.TryParse(birthdayObj.ToString(), out DateTime bday))
                 {
                     return bday;
                 }
@@ -147,9 +183,9 @@ namespace OhAuthToo.ConcreteClients
             get
             {
                 var dict = OAuthClientUtils.JsonToDictionary(Me());
-                if (dict.ContainsKey("gender"))
+                if (dict != null && dict.TryGetValue("gender", out var genderObj) && genderObj != null)
                 {
-                    return (string)dict["gender"] == "male" ? Gender.Male : Gender.Female;
+                    return genderObj.ToString() == "male" ? Gender.Male : Gender.Female;
                 }
                 return Gender.Any;
             }

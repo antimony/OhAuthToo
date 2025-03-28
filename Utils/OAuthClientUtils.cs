@@ -1,49 +1,45 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Text;
-using System.Web.Script.Serialization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 namespace OhAuthToo.Utils
 {
-
     public static class OAuthClientUtils
     {
-        public static dynamic JsonToDynamic(string response)
+        private static readonly HttpClient httpClient = new HttpClient();
+
+        public static JsonNode? JsonToDynamic(string response)
         {
-            var jss = new JavaScriptSerializer();
-            jss.RegisterConverters(new JavaScriptConverter[] { new DynamicJsonConverter() });
-            var dynamicResponse = jss.Deserialize(response, typeof(object)) as dynamic;
-            return dynamicResponse;
+            return JsonNode.Parse(response);
         }
 
-        public static Dictionary<string, object> JsonToDictionary(string response)
+        public static Dictionary<string, object>? JsonToDictionary(string response)
         {
-            var jss = new JavaScriptSerializer();
-            var responseDict = jss.Deserialize<Dictionary<string, object>>(response);
-            return responseDict;
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(response);
         }
 
         public static string MakeRequest(string url)
         {
-            WebRequest myWebRequest = WebRequest.Create(url);
-            WebResponse myWebResponse;
+            return MakeRequestAsync(url).GetAwaiter().GetResult();
+        }
+
+        public static async Task<string> MakeRequestAsync(string url)
+        {
             try
             {
-                myWebResponse = myWebRequest.GetResponse();
+                HttpResponseMessage response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
             }
-            catch (WebException e)
+            catch (HttpRequestException e)
             {
-                myWebResponse = e.Response;
+                // Log the exception or handle it as needed
+                return $"{{\"error\": {{\"message\": \"{e.Message}\"}}}}";
             }
-            Stream receiveStream = myWebResponse.GetResponseStream();
-            Encoding encode = System.Text.Encoding.GetEncoding("utf-8");
-            StreamReader readStream = new StreamReader(receiveStream, encode);
-            string response = readStream.ReadToEnd();
-            readStream.Close();
-            myWebResponse.Close();
-            return response;
         }
 
         public static string RequestUrl(string baseurl, string requesturl, string token)
@@ -55,7 +51,8 @@ namespace OhAuthToo.Utils
 
         public static bool IsErrorResponse(string response)
         {
-            return (JsonToDictionary(response).ContainsKey("error"));
+            var dict = JsonToDictionary(response);
+            return dict != null && dict.ContainsKey("error");
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Xc58XtmM3QM=",
+  "success": true,
+  "projectFilePath": "/Users/msurin/dev/OhAuthToo/OhAuthToo.csproj",
+  "expectedPackageFiles": [
+    "/Users/msurin/.nuget/packages/microsoft.netcore.app.ref/8.0.14/microsoft.netcore.app.ref.8.0.14.nupkg.sha512",
+    "/Users/msurin/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.14/microsoft.aspnetcore.app.ref.8.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}
