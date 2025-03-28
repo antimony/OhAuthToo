@@ -1,0 +1,12 @@
+/Users/msurin/dev/OhAuthToo/bin/Debug/net8.0/OhAuthToo.deps.json
+/Users/msurin/dev/OhAuthToo/bin/Debug/net8.0/OhAuthToo.dll
+/Users/msurin/dev/OhAuthToo/bin/Debug/net8.0/OhAuthToo.pdb
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.GeneratedMSBuildEditorConfig.editorconfig
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.AssemblyInfoInputs.cache
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.AssemblyInfo.cs
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.csproj.CoreCompileInputs.cache
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.sourcelink.json
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.dll
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/refint/OhAuthToo.dll
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/OhAuthToo.pdb
+/Users/msurin/dev/OhAuthToo/obj/Debug/net8.0/ref/OhAuthToo.dll

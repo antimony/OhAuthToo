@@ -1,37 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-
+﻿// This file is kept for backward compatibility but is no longer needed
+// as we're using System.Text.Json.Nodes.JsonNode instead
 namespace OhAuthToo.Utils
 {
-    public class DynamicJsonObject : DynamicObject
+    // This class is kept as a placeholder for backward compatibility
+    // The functionality has been replaced with System.Text.Json.Nodes.JsonNode
+    public class DynamicJsonObject
     {
-        private IDictionary<string, object> Dictionary { get; set; }
-
-        public DynamicJsonObject(IDictionary<string, object> dictionary)
-        {
-            this.Dictionary = dictionary;
-        }
-
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
-        {
-            result = this.Dictionary[binder.Name];
-
-            if (result is IDictionary<string, object>)
-            {
-                result = new DynamicJsonObject(result as IDictionary<string, object>);
-            }
-            else if (result is ArrayList && (result as ArrayList) is IDictionary<string, object>)
-            {
-                result = new List<DynamicJsonObject>((result as ArrayList).ToArray().Select(x => new DynamicJsonObject(x as IDictionary<string, object>)));
-            }
-            else if (result is ArrayList)
-            {
-                result = new List<object>((result as ArrayList).ToArray());
-            }
-
-            return this.Dictionary.ContainsKey(binder.Name);
-        }
+        // No implementation needed as we're using JsonNode
     }
 }

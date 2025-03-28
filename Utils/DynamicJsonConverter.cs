@@ -1,33 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Web.Script.Serialization;
-
+﻿// This file is kept for backward compatibility but is no longer needed
+// as we're using System.Text.Json.Nodes.JsonNode instead
 namespace OhAuthToo.Utils
 {
-    public class DynamicJsonConverter : JavaScriptConverter
+    // This class is kept as a placeholder for backward compatibility
+    // The functionality has been replaced with System.Text.Json.Nodes.JsonNode
+    public class DynamicJsonConverter
     {
-        public override object Deserialize(IDictionary<string, object> dictionary, Type type, JavaScriptSerializer serializer)
-        {
-            if (dictionary == null)
-                throw new ArgumentNullException("dictionary");
-
-            if (type == typeof(object))
-            {
-                return new DynamicJsonObject(dictionary);
-            }
-
-            return null;
-        }
-
-        public override IDictionary<string, object> Serialize(object obj, JavaScriptSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override IEnumerable<Type> SupportedTypes
-        {
-            get { return new ReadOnlyCollection<Type>(new List<Type>(new Type[] { typeof(object) })); }
-        }
+        // No implementation needed as we're using JsonNode
     }
 }
